@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organizador de Documentos y Cronograma</title>
+    <title>Organizador Inteligente de Documentos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #4a6fa5;
-            --secondary-color: #6b8cae;
-            --accent-color: #ff6b6b;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --success-color: #28a745;
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9f0;
+            --warning: #f9c74f;
+            --danger: #f94144;
+            --gray: #6c757d;
+            --light-bg: #edf2f4;
         }
         
         * {
@@ -22,53 +27,103 @@
         }
         
         body {
-            background-color: #f5f7fa;
-            color: #333;
+            background: linear-gradient(135deg, #edf2f4 0%, #e5e5e5 100%);
+            color: var(--dark);
             line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
         }
         
         header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            padding: 1rem;
-            border-radius: 10px;
+            padding: 1.5rem;
+            border-radius: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        h1 {
-            text-align: center;
-            margin-bottom: 10px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 2.5rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
         }
         
         .chat-container {
             display: flex;
             flex-direction: column;
-            height: 70vh;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            height: 100%;
         }
         
         .chat-messages {
             flex: 1;
-            padding: 20px;
+            padding: 10px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
         
         .message {
-            margin-bottom: 15px;
-            padding: 12px 15px;
+            padding: 12px 16px;
             border-radius: 18px;
             max-width: 80%;
             animation: fadeIn 0.3s ease-in;
+            position: relative;
         }
         
         @keyframes fadeIn {
@@ -77,17 +132,24 @@
         }
         
         .user-message {
-            background-color: var(--primary-color);
+            background-color: var(--primary);
             color: white;
-            margin-left: auto;
+            align-self: flex-end;
             border-bottom-right-radius: 5px;
         }
         
         .bot-message {
-            background-color: #e9ecef;
-            color: var(--dark-color);
-            margin-right: auto;
+            background-color: var(--light-bg);
+            color: var(--dark);
+            align-self: flex-start;
             border-bottom-left-radius: 5px;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
         }
         
         .input-area {
@@ -95,6 +157,7 @@
             padding: 15px;
             background-color: #f8f9fa;
             border-top: 1px solid #dee2e6;
+            gap: 10px;
         }
         
         input[type="text"] {
@@ -104,135 +167,409 @@
             border-radius: 20px;
             outline: none;
             font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
         }
         
         button {
-            background-color: var(--primary-color);
+            background-color: var(--primary);
             color: white;
             border: none;
-            border-radius: 20px;
-            padding: 12px 20px;
-            margin-left: 10px;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
         }
         
         button:hover {
-            background-color: var(--secondary-color);
-        }
-        
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .feature-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature-card h3 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
+            background-color: var(--secondary);
+            transform: rotate(5deg);
         }
         
         .upload-area {
-            border: 2px dashed var(--secondary-color);
-            padding: 20px;
+            border: 2px dashed var(--primary);
+            padding: 30px;
             text-align: center;
             border-radius: 10px;
-            margin-top: 15px;
+            margin: 15px 0;
             cursor: pointer;
+            transition: all 0.3s;
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+            border-color: var(--secondary);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .file-list {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            gap: 10px;
+        }
+        
+        .file-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 600;
+        }
+        
+        .file-meta {
+            font-size: 0.8rem;
+            color: var(--gray);
         }
         
         .schedule-view {
             margin-top: 20px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .task {
-            padding: 10px;
-            border-left: 4px solid var(--primary-color);
-            background-color: #f8f9fa;
-            margin-bottom: 10px;
-            border-radius: 4px;
+            padding: 15px;
+            border-left: 4px solid var(--primary);
+            background-color: white;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
         }
         
-        .task h4 {
-            color: var(--primary-color);
+        .task:hover {
+            transform: translateX(5px);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .task-date {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .task-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+        
+        .task-priority {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .priority-high {
+            background-color: rgba(249, 65, 68, 0.2);
+            color: var(--danger);
+        }
+        
+        .priority-medium {
+            background-color: rgba(249, 199, 79, 0.2);
+            color: #d4a200;
+        }
+        
+        .priority-low {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
         }
         
         .tag {
             display: inline-block;
-            background-color: var(--secondary-color);
+            background-color: var(--secondary);
             color: white;
-            padding: 4px 8px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 0.8rem;
             margin-top: 5px;
         }
         
-        @media (max-width: 768px) {
-            .features {
-                grid-template-columns: 1fr;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ced4da;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            background-color: var(--success);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .storage-info {
+            font-size: 0.8rem;
+            padding: 10px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Organizador de Documentos y Cronograma</h1>
-            <p>Asistente inteligente para gestionar tus documentos y planificar tus actividades</p>
+            <div class="logo">
+                <i class="fas fa-file-alt"></i>
+                <h1>Organizador Inteligente de Documentos</h1>
+            </div>
+            <div class="user">
+                <i class="fas fa-user-circle fa-2x"></i>
+            </div>
         </header>
         
-        <div class="chat-container">
-            <div class="chat-messages" id="chat-messages">
-                <div class="message bot-message">
-                    ¡Hola! Soy tu asistente organizador. Puedo ayudarte a clasificar documentos y crear un cronograma. ¿Qué necesitas hacer hoy?
-                </div>
+        <div class="card">
+            <div class="card-header">
+                <span>Asistente Virtual</span>
+                <i class="fas fa-robot"></i>
             </div>
-            
-            <div class="input-area">
-                <input type="text" id="user-input" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
-                <button id="send-button">Enviar</button>
+            <div class="card-body">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message bot-message">
+                            ¡Hola! Soy tu asistente organizador. ¿En qué puedo ayudarte hoy?
+                            <div class="message-time">10:45 AM</div>
+                        </div>
+                        <div class="message user-message">
+                            Necesito organizar mis documentos de la universidad
+                            <div class="message-time">10:46 AM</div>
+                        </div>
+                        <div class="message bot-message">
+                            Perfecto, puedo ayudarte con eso. Puedes subir tus documentos arrastrándolos al área de la derecha o haciendo clic en ella. Luego puedo generar un cronograma de estudio para ti.
+                            <div class="message-time">10:46 AM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-area">
+                        <input type="text" id="user-input" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+                        <button id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div class="features">
-            <div class="feature-card">
-                <h3>Gestión de Documentos</h3>
-                <p>Sube y organiza tus documentos por tipo, fecha o importancia.</p>
+        <div class="card">
+            <div class="card-header">
+                <span>Gestión de Documentos</span>
+                <i class="fas fa-folder"></i>
+            </div>
+            <div class="card-body">
                 <div class="upload-area" id="drop-zone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
                     <p>Arrastra tus documentos aquí o haz clic para seleccionar</p>
-                    <input type="file" id="file-input" style="display: none;" multiple>
+                    <p class="file-meta">Formatos soportados: PDF, DOCX, XLSX, PPTX, imágenes</p>
+                    <input type="file" id="file-input" style="display: none;" multiple accept=".pdf,.docx,.xlsx,.pptx,.txt,.jpg,.jpeg,.png">
                 </div>
-                <div id="file-list"></div>
-            </div>
-            
-            <div class="feature-card">
-                <h3>Crear Cronograma</h3>
-                <p>Genera un plan de actividades basado en tus documentos y prioridades.</p>
-                <button id="generate-schedule">Generar Cronograma</button>
-                <div id="schedule-preview"></div>
+                
+                <div class="file-list" id="file-list">
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">Apuntes Matemáticas.pdf</div>
+                            <div class="file-meta">2.4 MB - Subido: 12/05/2023</div>
+                        </div>
+                        <div class="file-actions">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="fas fa-file-word"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">Ensayo Literatura.docx</div>
+                            <div class="file-meta">1.1 MB - Subido: 11/05/2023</div>
+                        </div>
+                        <div class="file-actions">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="storage-info" id="storage-info">
+                    <i class="fas fa-database"></i> El cronograma se guarda en el almacenamiento local de tu navegador
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-outline" id="clear-files">
+                        <i class="fas fa-trash"></i> Limpiar
+                    </button>
+                    <button class="btn btn-primary" id="generate-schedule">
+                        <i class="fas fa-calendar-alt"></i> Generar Cronograma
+                    </button>
+                </div>
             </div>
         </div>
         
-        <div class="schedule-view" id="schedule-view" style="display: none;">
-            <h2>Cronograma Generado</h2>
-            <div id="tasks-container"></div>
+        <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+                <span>Cronograma Generado</span>
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="card-body">
+                <div class="controls">
+                    <button class="btn btn-outline" id="save-schedule">
+                        <i class="fas fa-save"></i> Guardar Cronograma
+                    </button>
+                    <button class="btn btn-outline" id="load-schedule">
+                        <i class="fas fa-folder-open"></i> Cargar Cronograma
+                    </button>
+                    <button class="btn btn-outline" id="export-schedule">
+                        <i class="fas fa-download"></i> Exportar a PDF
+                    </button>
+                </div>
+                
+                <div class="schedule-view" id="schedule-view">
+                    <div class="task">
+                        <div class="task-header">
+                            <div class="task-title">Estudiar para examen de Matemáticas</div>
+                            <div class="task-date">15 Mayo, 2023</div>
+                        </div>
+                        <div class="task-desc">Repasar apuntes de álgebra y geometría. Hacer ejercicios de práctica.</div>
+                        <span class="task-priority priority-high">Alta prioridad</span>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-header">
+                            <div class="task-title">Terminar ensayo de Literatura</div>
+                            <div class="task-date">17 Mayo, 2023</div>
+                        </div>
+                        <div class="task-desc">Completar la redacción y revisar las citas bibliográficas.</div>
+                        <span class="task-priority priority-medium">Media prioridad</span>
+                    </div>
+                    
+                    <div class="task">
+                        <div class="task-header">
+                            <div class="task-title">Preparar presentación de Historia</div>
+                            <div class="task-date">20 Mayo, 2023</div>
+                        </div>
+                        <div class="task-desc">Crear diapositivas y preparar notas para la exposición.</div>
+                        <span class="task-priority priority-low">Baja prioridad</span>
+                    </div>
+                </div>
+            </div>
         </div>
+        
+        <div class="footer">
+            <p>Organizador Inteligente de Documentos &copy; 2023 - Todos los derechos reservados</p>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i> <span id="notification-text"></span>
     </div>
 
     <script>
@@ -244,17 +581,73 @@
             const dropZone = document.getElementById('drop-zone');
             const generateScheduleBtn = document.getElementById('generate-schedule');
             const scheduleView = document.getElementById('schedule-view');
-            const tasksContainer = document.getElementById('tasks-container');
+            const clearFilesBtn = document.getElementById('clear-files');
+            const saveScheduleBtn = document.getElementById('save-schedule');
+            const loadScheduleBtn = document.getElementById('load-schedule');
+            const exportScheduleBtn = document.getElementById('export-schedule');
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
             
             let documents = [];
             let schedule = [];
+            
+            // Cargar datos guardados al iniciar
+            loadFromLocalStorage();
+            
+            // Función para mostrar notificaciones
+            function showNotification(message, isSuccess = true) {
+                notification.style.backgroundColor = isSuccess ? 'var(--success)' : 'var(--danger)';
+                notificationText.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Función para guardar en localStorage
+            function saveToLocalStorage() {
+                const data = {
+                    documents: documents,
+                    schedule: schedule
+                };
+                localStorage.setItem('documentOrganizer', JSON.stringify(data));
+                showNotification('Datos guardados correctamente');
+            }
+            
+            // Función para cargar desde localStorage
+            function loadFromLocalStorage() {
+                const savedData = localStorage.getItem('documentOrganizer');
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        documents = data.documents || [];
+                        schedule = data.schedule || [];
+                        
+                        // Actualizar la interfaz
+                        updateFileList();
+                        updateScheduleView();
+                        
+                        showNotification('Datos cargados correctamente');
+                    } catch (e) {
+                        console.error('Error al cargar datos guardados:', e);
+                    }
+                }
+            }
             
             // Función para agregar mensajes al chat
             function addMessage(message, isUser) {
                 const messageDiv = document.createElement('div');
                 messageDiv.classList.add('message');
                 messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
-                messageDiv.textContent = message;
+                
+                const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                messageDiv.innerHTML = `
+                    ${message}
+                    <div class="message-time">${time}</div>
+                `;
+                
                 chatMessages.appendChild(messageDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
@@ -279,6 +672,8 @@
                         response = '¡Hola! ¿En qué puedo ayudarte hoy?';
                     } else if (message.toLowerCase().includes('organizar') || message.toLowerCase().includes('clasificar')) {
                         response = 'Puedo organizar tus documentos por tipo, fecha o prioridad. Solo sube los archivos y yo me encargo del resto.';
+                    } else if (message.toLowerCase().includes('guardar')) {
+                        response = 'Tu cronograma se guarda automáticamente en el almacenamiento local de tu navegador. También puedes usar el botón "Guardar Cronograma" para forzar el guardado.';
                     } else {
                         response = 'Entendido. ¿Necesitas ayuda para organizar documentos o generar un cronograma?';
                     }
@@ -304,16 +699,16 @@
             
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                dropZone.style.backgroundColor = '#e9ecef';
+                dropZone.style.backgroundColor = 'rgba(67, 97, 238, 0.15)';
             });
             
             dropZone.addEventListener('dragleave', () => {
-                dropZone.style.backgroundColor = '';
+                dropZone.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
             });
             
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
-                dropZone.style.backgroundColor = '';
+                dropZone.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
                 
                 const files = e.dataTransfer.files;
                 handleFiles(files);
@@ -327,6 +722,24 @@
             function handleFiles(files) {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
+                    
+                    // Verificar el tipo de archivo
+                    const fileType = file.type;
+                    const allowedTypes = [
+                        'application/pdf',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                        'text/plain',
+                        'image/jpeg',
+                        'image/png'
+                    ];
+                    
+                    if (!allowedTypes.includes(fileType)) {
+                        showNotification(`Tipo de archivo no compatible: ${file.name}`, false);
+                        continue;
+                    }
+                    
                     documents.push({
                         name: file.name,
                         type: file.type,
@@ -335,24 +748,71 @@
                     });
                     
                     addMessage(`Documento "${file.name}" subido correctamente.`, false);
+                    addFileToList(file);
                 }
                 
-                updateFileList();
+                saveToLocalStorage();
+            }
+            
+            function addFileToList(file) {
+                const fileList = document.getElementById('file-list');
+                
+                // Determinar el icono según el tipo de archivo
+                let fileIcon = 'fa-file';
+                if (file.type.includes('pdf')) fileIcon = 'fa-file-pdf';
+                else if (file.type.includes('word')) fileIcon = 'fa-file-word';
+                else if (file.type.includes('excel') || file.type.includes('sheet')) fileIcon = 'fa-file-excel';
+                else if (file.type.includes('powerpoint') || file.type.includes('presentation')) fileIcon = 'fa-file-powerpoint';
+                else if (file.type.includes('image')) fileIcon = 'fa-file-image';
+                else if (file.type.includes('text')) fileIcon = 'fa-file-alt';
+                
+                const fileItem = document.createElement('div');
+                fileItem.classList.add('file-item');
+                fileItem.innerHTML = `
+                    <div class="file-icon">
+                        <i class="fas ${fileIcon}"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${formatFileSize(file.size)} - Subido: ${new Date().toLocaleDateString()}</div>
+                    </div>
+                    <div class="file-actions">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                `;
+                
+                fileList.appendChild(fileItem);
             }
             
             function updateFileList() {
                 const fileList = document.getElementById('file-list');
-                fileList.innerHTML = '<h4>Documentos subidos:</h4>';
+                fileList.innerHTML = '';
                 
                 documents.forEach(doc => {
-                    const docElement = document.createElement('div');
-                    docElement.classList.add('task');
-                    docElement.innerHTML = `
-                        <h4>${doc.name}</h4>
-                        <p>Tipo: ${doc.type || 'desconocido'} | Tamaño: ${formatFileSize(doc.size)}</p>
-                        <span class="tag">Subido: ${doc.uploadDate.toLocaleDateString()}</span>
+                    let fileIcon = 'fa-file';
+                    if (doc.type.includes('pdf')) fileIcon = 'fa-file-pdf';
+                    else if (doc.type.includes('word')) fileIcon = 'fa-file-word';
+                    else if (doc.type.includes('excel') || doc.type.includes('sheet')) fileIcon = 'fa-file-excel';
+                    else if (doc.type.includes('powerpoint') || doc.type.includes('presentation')) fileIcon = 'fa-file-powerpoint';
+                    else if (doc.type.includes('image')) fileIcon = 'fa-file-image';
+                    else if (doc.type.includes('text')) fileIcon = 'fa-file-alt';
+                    
+                    const fileItem = document.createElement('div');
+                    fileItem.classList.add('file-item');
+                    fileItem.innerHTML = `
+                        <div class="file-icon">
+                            <i class="fas ${fileIcon}"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">${doc.name}</div>
+                            <div class="file-meta">${formatFileSize(doc.size)} - Subido: ${new Date(doc.uploadDate).toLocaleDateString()}</div>
+                        </div>
+                        <div class="file-actions">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </div>
                     `;
-                    fileList.appendChild(docElement);
+                    
+                    fileList.appendChild(fileItem);
                 });
             }
             
@@ -370,23 +830,51 @@
             function generateSchedule() {
                 if (documents.length === 0) {
                     addMessage('Primero necesitas subir algunos documentos para generar un cronograma.', false);
+                    showNotification('Sube documentos primero para generar un cronograma', false);
                     return;
                 }
                 
-                // Generar tareas basadas en los documentos
+                // Limpiar el cronograma existente
                 schedule = [];
                 
+                // Generar tareas basadas en los documentos
                 documents.forEach((doc, index) => {
-                    const daysToAdd = index % 3; // Distribuir las tareas en varios días
+                    const daysToAdd = index % 4; // Distribuir las tareas en varios días
                     const taskDate = new Date();
                     taskDate.setDate(taskDate.getDate() + daysToAdd);
                     
+                    const priorities = ['priority-high', 'priority-medium', 'priority-low'];
+                    const priorityLabels = ['Alta prioridad', 'Media prioridad', 'Baja prioridad'];
+                    const priorityIndex = index % 3;
+                    
+                    // Diferentes tipos de tareas según el tipo de documento
+                    let taskTitle = '';
+                    let taskDescription = '';
+                    
+                    if (doc.type.includes('pdf') || doc.type.includes('text')) {
+                        taskTitle = `Estudiar ${doc.name}`;
+                        taskDescription = `Leer y analizar el documento ${doc.name}. Tomar notas importantes.`;
+                    } else if (doc.type.includes('word')) {
+                        taskTitle = `Redactar ${doc.name}`;
+                        taskDescription = `Completar la redacción del documento ${doc.name}. Revisar ortografía y gramática.`;
+                    } else if (doc.type.includes('excel') || doc.type.includes('sheet')) {
+                        taskTitle = `Analizar datos en ${doc.name}`;
+                        taskDescription = `Revisar y analizar los datos en la hoja de cálculo ${doc.name}. Crear gráficos si es necesario.`;
+                    } else if (doc.type.includes('powerpoint') || doc.type.includes('presentation')) {
+                        taskTitle = `Preparar presentación ${doc.name}`;
+                        taskDescription = `Revisar y practicar la presentación ${doc.name}. Preparar notas para la exposición.`;
+                    } else {
+                        taskTitle = `Revisar ${doc.name}`;
+                        taskDescription = `Revisar y procesar el documento ${doc.name}.`;
+                    }
+                    
                     schedule.push({
                         id: index + 1,
-                        title: `Revisar ${doc.name}`,
-                        description: `Revisar y procesar el documento ${doc.name}`,
+                        title: taskTitle,
+                        description: taskDescription,
                         date: taskDate,
-                        priority: index % 2 === 0 ? 'Alta' : 'Media',
+                        priority: priorities[priorityIndex],
+                        priorityLabel: priorityLabels[priorityIndex],
                         completed: false
                     });
                 });
@@ -394,25 +882,75 @@
                 // Ordenar por fecha
                 schedule.sort((a, b) => a.date - b.date);
                 
-                displaySchedule();
+                updateScheduleView();
+                saveToLocalStorage();
+                
                 addMessage('He generado un cronograma basado en tus documentos. Puedes verlo en la sección de abajo.', false);
+                showNotification('Cronograma generado correctamente');
             }
             
-            function displaySchedule() {
-                scheduleView.style.display = 'block';
-                tasksContainer.innerHTML = '';
+            function updateScheduleView() {
+                scheduleView.innerHTML = '';
+                
+                if (schedule.length === 0) {
+                    const emptyState = document.createElement('div');
+                    emptyState.classList.add('empty-state');
+                    emptyState.innerHTML = `
+                        <i class="fas fa-calendar-plus"></i>
+                        <p>No hay cronograma generado. Haz clic en "Generar Cronograma" para crear uno.</p>
+                    `;
+                    scheduleView.appendChild(emptyState);
+                    return;
+                }
                 
                 schedule.forEach(task => {
+                    const taskDate = new Date(task.date);
+                    
                     const taskElement = document.createElement('div');
                     taskElement.classList.add('task');
                     taskElement.innerHTML = `
-                        <h4>${task.title}</h4>
-                        <p>${task.description}</p>
-                        <p>Fecha: ${task.date.toLocaleDateString()} | Prioridad: <span style="color: ${task.priority === 'Alta' ? '#dc3545' : '#ffc107'}">${task.priority}</span></p>
+                        <div class="task-header">
+                            <div class="task-title">${task.title}</div>
+                            <div class="task-date">${taskDate.toLocaleDateString()}</div>
+                        </div>
+                        <div class="task-desc">${task.description}</div>
+                        <span class="task-priority ${task.priority}">${task.priorityLabel}</span>
                     `;
-                    tasksContainer.appendChild(taskElement);
+                    
+                    scheduleView.appendChild(taskElement);
                 });
             }
+            
+            // Limpiar archivos
+            clearFilesBtn.addEventListener('click', () => {
+                documents = [];
+                updateFileList();
+                saveToLocalStorage();
+                showNotification('Archivos eliminados correctamente');
+            });
+            
+            // Guardar cronograma
+            saveScheduleBtn.addEventListener('click', () => {
+                saveToLocalStorage();
+            });
+            
+            // Cargar cronograma
+            loadScheduleBtn.addEventListener('click', () => {
+                loadFromLocalStorage();
+            });
+            
+            // Exportar a PDF (simulado)
+            exportScheduleBtn.addEventListener('click', () => {
+                showNotification('Funcionalidad de exportación a PDF en desarrollo');
+            });
+            
+            // Añadir algunos mensajes iniciales al chat
+            setTimeout(() => {
+                addMessage("Puedo ayudarte a organizar tus documentos por tipo, fecha o importancia. También puedo generar un cronograma de estudio o trabajo basado en ellos.", false);
+            }, 1500);
+            
+            // Inicializar la vista
+            updateScheduleView();
         });
     </script>
 </body>
