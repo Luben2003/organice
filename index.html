@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organizador Inteligente de Documentos</title>
+    <title>Organizador Inteligente con OCR</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Incluir Tesseract.js para OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <style>
         :root {
             --primary: #4361ee;
@@ -411,6 +413,41 @@
             color: var(--gray);
             font-size: 0.9rem;
         }
+        
+        .progress-bar {
+            height: 5px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .ocr-result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .ocr-toggle {
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -418,7 +455,7 @@
         <header>
             <div class="logo">
                 <i class="fas fa-file-alt"></i>
-                <h1>Organizador Inteligente de Documentos</h1>
+                <h1>Organizador Inteligente con OCR</h1>
             </div>
             <div class="user">
                 <i class="fas fa-user-circle fa-2x"></i>
@@ -434,15 +471,15 @@
                 <div class="chat-container">
                     <div class="chat-messages" id="chat-messages">
                         <div class="message bot-message">
-                            ¡Hola! Soy tu asistente organizador. ¿En qué puedo ayudarte hoy?
+                            ¡Hola! Soy tu asistente organizador. Ahora puedo leer texto de imágenes usando OCR.
                             <div class="message-time">10:45 AM</div>
                         </div>
                         <div class="message user-message">
-                            Necesito organizar mis documentos de la universidad
+                            ¿Puedes leer texto de imágenes?
                             <div class="message-time">10:46 AM</div>
                         </div>
                         <div class="message bot-message">
-                            Perfecto, puedo ayudarte con eso. Puedes subir tus documentos arrastrándolos al área de la derecha o haciendo clic en ella. Luego puedo generar un cronograma de estudio para ti.
+                            ¡Sí! Sube una imagen con texto y podré extraerlo automáticamente para incluirlo en tu cronograma.
                             <div class="message-time">10:46 AM</div>
                         </div>
                     </div>
@@ -468,8 +505,17 @@
                         <i class="fas fa-cloud-upload-alt"></i>
                     </div>
                     <p>Arrastra tus documentos aquí o haz clic para seleccionar</p>
-                    <p class="file-meta">Formatos soportados: PDF, DOCX, XLSX, PPTX, imágenes</p>
+                    <p class="file-meta">Formatos soportados: PDF, DOCX, XLSX, PPTX, imágenes (OCR)</p>
                     <input type="file" id="file-input" style="display: none;" multiple accept=".pdf,.docx,.xlsx,.pptx,.txt,.jpg,.jpeg,.png">
+                </div>
+                
+                <div class="progress-bar" id="ocr-progress">
+                    <div class="progress" id="ocr-progress-bar"></div>
+                </div>
+                
+                <div class="ocr-result" id="ocr-result">
+                    <h4>Texto detectado:</h4>
+                    <div id="ocr-text"></div>
                 </div>
                 
                 <div class="file-list" id="file-list">
@@ -564,7 +610,7 @@
         </div>
         
         <div class="footer">
-            <p>Organizador Inteligente de Documentos &copy; 2023 - Todos los derechos reservados</p>
+            <p>Organizador Inteligente con OCR &copy; 2023 - Todos los derechos reservados</p>
         </div>
     </div>
 
@@ -587,9 +633,14 @@
             const exportScheduleBtn = document.getElementById('export-schedule');
             const notification = document.getElementById('notification');
             const notificationText = document.getElementById('notification-text');
+            const ocrProgress = document.getElementById('ocr-progress');
+            const ocrProgressBar = document.getElementById('ocr-progress-bar');
+            const ocrResult = document.getElementById('ocr-result');
+            const ocrText = document.getElementById('ocr-text');
             
             let documents = [];
             let schedule = [];
+            let extractedTexts = {};
             
             // Cargar datos guardados al iniciar
             loadFromLocalStorage();
@@ -609,7 +660,8 @@
             function saveToLocalStorage() {
                 const data = {
                     documents: documents,
-                    schedule: schedule
+                    schedule: schedule,
+                    extractedTexts: extractedTexts
                 };
                 localStorage.setItem('documentOrganizer', JSON.stringify(data));
                 showNotification('Datos guardados correctamente');
@@ -623,6 +675,7 @@
                         const data = JSON.parse(savedData);
                         documents = data.documents || [];
                         schedule = data.schedule || [];
+                        extractedTexts = data.extractedTexts || {};
                         
                         // Actualizar la interfaz
                         updateFileList();
@@ -674,6 +727,8 @@
                         response = 'Puedo organizar tus documentos por tipo, fecha o prioridad. Solo sube los archivos y yo me encargo del resto.';
                     } else if (message.toLowerCase().includes('guardar')) {
                         response = 'Tu cronograma se guarda automáticamente en el almacenamiento local de tu navegador. También puedes usar el botón "Guardar Cronograma" para forzar el guardado.';
+                    } else if (message.toLowerCase().includes('imagen') || message.toLowerCase().includes('ocr') || message.toLowerCase().includes('texto')) {
+                        response = 'Puedo extraer texto de imágenes usando tecnología OCR. Solo sube una imagen con texto y la procesaré automáticamente.';
                     } else {
                         response = 'Entendido. ¿Necesitas ayuda para organizar documentos o generar un cronograma?';
                     }
@@ -749,9 +804,60 @@
                     
                     addMessage(`Documento "${file.name}" subido correctamente.`, false);
                     addFileToList(file);
+                    
+                    // Si es una imagen, procesar con OCR
+                    if (fileType.includes('image')) {
+                        processImageWithOCR(file);
+                    }
                 }
                 
                 saveToLocalStorage();
+            }
+            
+            function processImageWithOCR(file) {
+                showNotification(`Procesando imagen con OCR: ${file.name}`);
+                
+                // Mostrar barra de progreso
+                ocrProgress.style.display = 'block';
+                ocrProgressBar.style.width = '0%';
+                
+                // Usar Tesseract.js para OCR
+                Tesseract.recognize(
+                    file,
+                    'spa+eng', // Idiomas: español e inglés
+                    { 
+                        logger: progress => {
+                            if (progress.status === 'recognizing text') {
+                                // Actualizar barra de progreso
+                                const p = Math.round(progress.progress * 100);
+                                ocrProgressBar.style.width = `${p}%`;
+                            }
+                        }
+                    }
+                ).then(result => {
+                    // Ocultar barra de progreso
+                    setTimeout(() => {
+                        ocrProgress.style.display = 'none';
+                    }, 500);
+                    
+                    // Guardar texto extraído
+                    const text = result.data.text;
+                    extractedTexts[file.name] = text;
+                    
+                    // Mostrar resultado
+                    ocrText.textContent = text || 'No se detectó texto en la imagen';
+                    ocrResult.style.display = 'block';
+                    
+                    // Añadir mensaje al chat
+                    addMessage(`He procesado la imagen "${file.name}" y extraído texto con OCR.`, false);
+                    
+                    showNotification('OCR completado correctamente');
+                    saveToLocalStorage();
+                }).catch(err => {
+                    ocrProgress.style.display = 'none';
+                    console.error('Error en OCR:', err);
+                    showNotification('Error al procesar la imagen con OCR', false);
+                });
             }
             
             function addFileToList(file) {
@@ -768,13 +874,18 @@
                 
                 const fileItem = document.createElement('div');
                 fileItem.classList.add('file-item');
+                
+                // Si es una imagen con texto extraído, añadir indicador
+                const hasOCR = extractedTexts[file.name] ? '<span class="tag">OCR</span>' : '';
+                
                 fileItem.innerHTML = `
                     <div class="file-icon">
                         <i class="fas ${fileIcon}"></i>
                     </div>
                     <div class="file-info">
-                        <div class="file-name">${file.name}</div>
+                        <div class="file-name">${file.name} ${hasOCR}</div>
                         <div class="file-meta">${formatFileSize(file.size)} - Subido: ${new Date().toLocaleDateString()}</div>
+                        ${extractedTexts[file.name] ? '<div class="ocr-toggle" onclick="toggleOCRResult(\'' + file.name + '\')">Ver texto extraído</div>' : ''}
                     </div>
                     <div class="file-actions">
                         <i class="fas fa-ellipsis-v"></i>
@@ -783,6 +894,14 @@
                 
                 fileList.appendChild(fileItem);
             }
+            
+            // Función global para mostrar/ocultar resultados OCR
+            window.toggleOCRResult = function(filename) {
+                if (extractedTexts[filename]) {
+                    ocrText.textContent = extractedTexts[filename];
+                    ocrResult.style.display = ocrResult.style.display === 'none' ? 'block' : 'none';
+                }
+            };
             
             function updateFileList() {
                 const fileList = document.getElementById('file-list');
@@ -799,13 +918,18 @@
                     
                     const fileItem = document.createElement('div');
                     fileItem.classList.add('file-item');
+                    
+                    // Si es una imagen con texto extraído, añadir indicador
+                    const hasOCR = extractedTexts[doc.name] ? '<span class="tag">OCR</span>' : '';
+                    
                     fileItem.innerHTML = `
                         <div class="file-icon">
                             <i class="fas ${fileIcon}"></i>
                         </div>
                         <div class="file-info">
-                            <div class="file-name">${doc.name}</div>
+                            <div class="file-name">${doc.name} ${hasOCR}</div>
                             <div class="file-meta">${formatFileSize(doc.size)} - Subido: ${new Date(doc.uploadDate).toLocaleDateString()}</div>
+                            ${extractedTexts[doc.name] ? '<div class="ocr-toggle" onclick="toggleOCRResult(\'' + doc.name + '\')">Ver texto extraído</div>' : ''}
                         </div>
                         <div class="file-actions">
                             <i class="fas fa-ellipsis-v"></i>
@@ -863,6 +987,12 @@
                     } else if (doc.type.includes('powerpoint') || doc.type.includes('presentation')) {
                         taskTitle = `Preparar presentación ${doc.name}`;
                         taskDescription = `Revisar y practicar la presentación ${doc.name}. Preparar notas para la exposición.`;
+                    } else if (doc.type.includes('image') && extractedTexts[doc.name]) {
+                        // Si es una imagen con texto extraído, usar ese texto
+                        const text = extractedTexts[doc.name];
+                        const shortText = text.length > 100 ? text.substring(0, 100) + '...' : text;
+                        taskTitle = `Revisar contenido de ${doc.name}`;
+                        taskDescription = `Revisar el contenido detectado en la imagen: "${shortText}"`;
                     } else {
                         taskTitle = `Revisar ${doc.name}`;
                         taskDescription = `Revisar y procesar el documento ${doc.name}.`;
@@ -924,7 +1054,9 @@
             // Limpiar archivos
             clearFilesBtn.addEventListener('click', () => {
                 documents = [];
+                extractedTexts = {};
                 updateFileList();
+                ocrResult.style.display = 'none';
                 saveToLocalStorage();
                 showNotification('Archivos eliminados correctamente');
             });
@@ -946,7 +1078,7 @@
             
             // Añadir algunos mensajes iniciales al chat
             setTimeout(() => {
-                addMessage("Puedo ayudarte a organizar tus documentos por tipo, fecha o importancia. También puedo generar un cronograma de estudio o trabajo basado en ellos.", false);
+                addMessage("Ahora puedo extraer texto de imágenes usando tecnología OCR. Sube una imagen con texto y podré leerlo automáticamente.", false);
             }, 1500);
             
             // Inicializar la vista
